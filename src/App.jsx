@@ -229,16 +229,20 @@ export default function App() {
     );
   }, [graphData]);
   const indicatorLeft = useMemo(() => {
-    if (!peakPoint || graphData.length <= 1) {
+    if (graphData.length <= 1) {
       return "65%";
     }
-    return `${(peakPoint.time_24h / 23) * 100}%`;
-  }, [graphData, peakPoint]);
+    return `${(form.current_time_24h / 23) * 100}%`;
+  }, [form.current_time_24h, graphData.length]);
   const lastDoseLabel = useMemo(() => {
     const lastDoseTime =
       (form.current_time_24h - form.hours_since_caffeine + 24) % 24;
     return formatHour(lastDoseTime);
   }, [form.current_time_24h, form.hours_since_caffeine]);
+  const axisLabels = useMemo(
+    () => graphData.filter((point) => Number.isInteger(point.time_24h) && point.time_24h % 3 === 0),
+    [graphData],
+  );
 
   const updateField = (field, parser = parseFloat) => (event) => {
     setForm((current) => ({
@@ -288,11 +292,11 @@ export default function App() {
             </div>
             <div style={{ ...styles.orangeIndicator, left: indicatorLeft }}>
               <div style={styles.orangeDot} />
-              <div style={styles.orangeLabel}>{peakPoint?.label ?? "Peak"}</div>
+              <div style={styles.orangeLabel}>Now</div>
             </div>
           </div>
           <div style={styles.axisRow}>
-            {graphData.map((point) => (
+            {axisLabels.map((point) => (
               <div key={point.hour_offset} style={styles.axisLabel}>
                 {point.label}
               </div>
@@ -543,7 +547,7 @@ const styles = {
   },
   axisRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(24, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
     gap: "1px",
     marginTop: "4px",
   },
