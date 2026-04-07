@@ -21,3 +21,42 @@ body {
 #root {
   min-height: 100vh;
 }
+
+.energy-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+}
+
+.energy-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+  border-radius: 999px;
+}
+
+.energy-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f26522;
+  margin-top: -5px;
+  border: 0;
+}
+
+.energy-slider::-moz-range-track {
+  height: 4px;
+  background: transparent;
+  border-radius: 999px;
+  border: 0;
+}
+
+.energy-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f26522;
+  border: 0;
+}

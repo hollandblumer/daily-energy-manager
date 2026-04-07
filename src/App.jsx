@@ -142,7 +142,7 @@ function buildFallbackResult(payload) {
   };
 }
 
-function buildDenseBars(points, count = 55) {
+function buildDenseBars(points, count = 120) {
   if (!points.length) {
     return [];
   }
@@ -255,6 +255,14 @@ export default function App() {
     }));
   };
 
+  const sliderStyle = (value, min, max) => {
+    const percent = ((value - min) / (max - min)) * 100;
+    return {
+      ...styles.slider,
+      background: `linear-gradient(90deg, #F26522 0%, #F26522 ${percent}%, #848484 ${percent}%, #848484 100%)`,
+    };
+  };
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -345,7 +353,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Sleep: {form.sleep_hrs}h</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.sleep_hrs, 0, 12)}
                   type="range"
                   min="0"
                   max="12"
@@ -357,7 +366,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Alcohol: {form.alcohol_units}</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.alcohol_units, 0, 10)}
                   type="range"
                   min="0"
                   max="10"
@@ -369,7 +379,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Caffeine: {form.caffeine_mg}mg</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.caffeine_mg, 0, 400)}
                   type="range"
                   min="0"
                   max="400"
@@ -381,7 +392,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Since caffeine: {form.hours_since_caffeine}h</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.hours_since_caffeine, 0, 12)}
                   type="range"
                   min="0"
                   max="12"
@@ -393,7 +405,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Since meal: {form.hours_since_meal}h</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.hours_since_meal, 0, 12)}
                   type="range"
                   min="0"
                   max="12"
@@ -405,7 +418,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Current time: {form.current_time_24h}h</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.current_time_24h, 0, 23.5)}
                   type="range"
                   min="0"
                   max="23.5"
@@ -417,7 +431,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Bedtime: {form.target_bedtime_24h}h</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.target_bedtime_24h, 0, 23.5)}
                   type="range"
                   min="0"
                   max="23.5"
@@ -429,7 +444,8 @@ export default function App() {
               <div style={styles.inputRow}>
                 <label>Jet lag: {form.jet_lag_hours}h</label>
                 <input
-                  style={styles.slider}
+                  className="energy-slider"
+                  style={sliderStyle(form.jet_lag_hours, -12, 12)}
                   type="range"
                   min="-12"
                   max="12"
@@ -539,7 +555,7 @@ const styles = {
   graphBars: {
     display: "flex",
     alignItems: "flex-end",
-    gap: "2.5px",
+    justifyContent: "space-between",
     width: "100%",
     height: "160px",
     position: "absolute",
@@ -548,8 +564,9 @@ const styles = {
     right: 0,
   },
   bar: {
-    flex: 1,
-    backgroundColor: "#D1D1D1",
+    width: "1.5px",
+    flex: "0 0 auto",
+    backgroundColor: "#848484",
   },
   orangeIndicator: {
     position: "absolute",
