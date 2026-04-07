@@ -1,5 +1,43 @@
 import { useState, useMemo, useEffect } from "react";
 
+function calculateEnergy({
+  sleep_hrs,
+  alcohol_units,
+  caffeine_mg,
+  hours_since_caffeine,
+  hours_since_meal,
+  current_time_24h,
+}) {
+  const sleepPenalty = Math.max(0, (7.5 - sleep_hrs) * 10);
+  const alcoholPenalty = alcohol_units * 5;
+  const baseScore = 100 - sleepPenalty - alcoholPenalty;
+
+  const activeCaffeine =
+    hours_since_caffeine < 0.75
+      ? caffeine_mg * (hours_since_caffeine / 0.75)
+      : caffeine_mg * (0.5 ** ((hours_since_caffeine - 0.75) / 5.0));
+
+  const boost = activeCaffeine * 0.2;
+  const foodComa = hours_since_meal < 1.5 ? 10 : 0;
+  const circadianDip =
+    current_time_24h >= 14 && current_time_24h <= 16 ? 15 : 0;
+  const finalScore = Math.max(
+    0,
+    Math.min(100, baseScore + boost - foodComa - circadianDip),
+  );
+
+  return {
+    energy_score: Math.round(finalScore * 10) / 10,
+    active_caffeine_mg: Math.round(activeCaffeine * 10) / 10,
+    recommendation: finalScore < 85 ? "YES" : "NO",
+    breakdown: {
+      base: baseScore,
+      boost: Math.round(boost * 10) / 10,
+      penalties: foodComa + circadianDip,
+    },
+  };
+}
+
 export default function App() {
   // --- STATE (Your ML Factors) ---
   const [sleep, setSleep] = useState(7);
@@ -16,26 +54,38 @@ export default function App() {
 
   // --- API CONNECTION (The "Bridge") ---
   useEffect(() => {
+    const payload = {
+      sleep_hrs: parseFloat(sleep),
+      alcohol_units: parseInt(alcohol),
+      caffeine_mg: 100,
+      hours_since_caffeine: 2.0,
+      hours_since_meal: parseFloat(hoursSinceMeal),
+      current_time_24h: 13.5,
+    };
+    const fallbackResult = calculateEnergy(payload);
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL ||
+      (window.location.hostname === "localhost" ? "http://127.0.0.1:8000" : "");
+
     const updateFromPython = async () => {
+      if (!apiBaseUrl) {
+        setApiResult(fallbackResult);
+        return;
+      }
+
       try {
-        const response = await fetch("http://127.0.0.1:8000/predict", {
+        const response = await fetch(`${apiBaseUrl}/predict`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sleep_hrs: parseFloat(sleep),
-            alcohol_units: parseInt(alcohol),
-            caffeine_mg: 100,
-            hours_since_caffeine: 2.0, // Hardcoded for now
-            hours_since_meal: parseFloat(hoursSinceMeal),
-            current_time_24h: 13.5, // Hardcoded for now
-          }),
+          body: JSON.stringify(payload),
         });
+        if (!response.ok) {
+          throw new Error(`API request failed with ${response.status}`);
+        }
         const data = await response.json();
         setApiResult(data);
       } catch {
-        console.error(
-          "Python server is offline. Run 'uvicorn main:app --reload'",
-        );
+        setApiResult(fallbackResult);
       }
     };
 
