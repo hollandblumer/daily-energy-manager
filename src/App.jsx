@@ -32,7 +32,7 @@ export default function App() {
         });
         const data = await response.json();
         setApiResult(data);
-      } catch (err) {
+      } catch {
         console.error(
           "Python server is offline. Run 'uvicorn main:app --reload'",
         );
