@@ -142,6 +142,35 @@ function buildFallbackResult(payload) {
   };
 }
 
+function buildDenseBars(points, count = 55) {
+  if (!points.length) {
+    return [];
+  }
+  if (points.length === 1) {
+    return Array.from({ length: count }, (_, index) => ({
+      key: `${index}-${points[0].time_24h}`,
+      energy_score: points[0].energy_score,
+    }));
+  }
+
+  return Array.from({ length: count }, (_, index) => {
+    const ratio = index / (count - 1);
+    const position = ratio * (points.length - 1);
+    const lowerIndex = Math.floor(position);
+    const upperIndex = Math.min(points.length - 1, lowerIndex + 1);
+    const blend = position - lowerIndex;
+    const lower = points[lowerIndex];
+    const upper = points[upperIndex];
+    const energyScore =
+      lower.energy_score + (upper.energy_score - lower.energy_score) * blend;
+
+    return {
+      key: `${index}-${lower.time_24h}-${upper.time_24h}`,
+      energy_score: energyScore,
+    };
+  });
+}
+
 const initialPayload = {
   sleep_hrs: 7,
   alcohol_units: 0,
@@ -190,6 +219,7 @@ export default function App() {
   }, [form]);
 
   const graphData = useMemo(() => apiResult.forecast ?? [], [apiResult.forecast]);
+  const denseBars = useMemo(() => buildDenseBars(graphData), [graphData]);
   const peakPoint = useMemo(() => {
     if (!graphData.length) {
       return null;
@@ -246,9 +276,9 @@ export default function App() {
           </div>
           <div style={styles.graphArea}>
             <div style={styles.graphBars}>
-              {graphData.map((point) => (
+              {denseBars.map((point) => (
                 <div
-                  key={point.hour_offset}
+                  key={point.key}
                   style={{
                     ...styles.bar,
                     height: `${Math.max(34, point.energy_score * 1.55)}px`,
@@ -470,7 +500,7 @@ const styles = {
   graphBars: {
     display: "flex",
     alignItems: "flex-end",
-    gap: "1px",
+    gap: "2.5px",
     width: "100%",
     height: "160px",
     position: "absolute",
