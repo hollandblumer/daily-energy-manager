@@ -222,100 +222,6 @@ export default function App() {
           </div>
         </header>
 
-        <section style={styles.controls}>
-          <div style={styles.sectionTitle}>Inputs</div>
-          <div style={styles.inputGrid}>
-            <div style={styles.inputRow}>
-              <label>Sleep: {form.sleep_hrs}h</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                step="0.5"
-                value={form.sleep_hrs}
-                onChange={updateField("sleep_hrs")}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Alcohol: {form.alcohol_units}</label>
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="1"
-                value={form.alcohol_units}
-                onChange={updateField("alcohol_units", Number)}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Caffeine: {form.caffeine_mg}mg</label>
-              <input
-                type="range"
-                min="0"
-                max="400"
-                step="25"
-                value={form.caffeine_mg}
-                onChange={updateField("caffeine_mg")}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Since caffeine: {form.hours_since_caffeine}h</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                step="0.25"
-                value={form.hours_since_caffeine}
-                onChange={updateField("hours_since_caffeine")}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Since meal: {form.hours_since_meal}h</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                step="0.25"
-                value={form.hours_since_meal}
-                onChange={updateField("hours_since_meal")}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Current time: {form.current_time_24h}h</label>
-              <input
-                type="range"
-                min="0"
-                max="23.5"
-                step="0.5"
-                value={form.current_time_24h}
-                onChange={updateField("current_time_24h")}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Bedtime: {form.target_bedtime_24h}h</label>
-              <input
-                type="range"
-                min="0"
-                max="23.5"
-                step="0.5"
-                value={form.target_bedtime_24h}
-                onChange={updateField("target_bedtime_24h")}
-              />
-            </div>
-            <div style={styles.inputRow}>
-              <label>Jet lag: {form.jet_lag_hours}h</label>
-              <input
-                type="range"
-                min="-12"
-                max="12"
-                step="1"
-                value={form.jet_lag_hours}
-                onChange={updateField("jet_lag_hours", Number)}
-              />
-            </div>
-          </div>
-        </section>
-
         <section style={styles.graphCard}>
           <div style={styles.graphStats}>
             <div>
@@ -339,6 +245,7 @@ export default function App() {
             </div>
             <div style={{ ...styles.orangeIndicator, left: indicatorLeft }}>
               <div style={styles.orangeDot} />
+              <div style={styles.orangeLabel}>{peakPoint?.label ?? "Peak"}</div>
             </div>
           </div>
           <div style={styles.axisRow}>
@@ -347,6 +254,108 @@ export default function App() {
                 {point.label}
               </div>
             ))}
+          </div>
+        </section>
+
+        <section style={styles.controls}>
+          <div style={styles.sectionTitle}>Inputs</div>
+          <div style={styles.inputGrid}>
+            <div style={styles.inputRow}>
+              <label>Sleep: {form.sleep_hrs}h</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="12"
+                step="0.5"
+                value={form.sleep_hrs}
+                onChange={updateField("sleep_hrs")}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Alcohol: {form.alcohol_units}</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={form.alcohol_units}
+                onChange={updateField("alcohol_units", Number)}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Caffeine: {form.caffeine_mg}mg</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="400"
+                step="25"
+                value={form.caffeine_mg}
+                onChange={updateField("caffeine_mg")}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Since caffeine: {form.hours_since_caffeine}h</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="12"
+                step="0.25"
+                value={form.hours_since_caffeine}
+                onChange={updateField("hours_since_caffeine")}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Since meal: {form.hours_since_meal}h</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="12"
+                step="0.25"
+                value={form.hours_since_meal}
+                onChange={updateField("hours_since_meal")}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Current time: {form.current_time_24h}h</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="23.5"
+                step="0.5"
+                value={form.current_time_24h}
+                onChange={updateField("current_time_24h")}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Bedtime: {form.target_bedtime_24h}h</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="0"
+                max="23.5"
+                step="0.5"
+                value={form.target_bedtime_24h}
+                onChange={updateField("target_bedtime_24h")}
+              />
+            </div>
+            <div style={styles.inputRow}>
+              <label>Jet lag: {form.jet_lag_hours}h</label>
+              <input
+                style={styles.slider}
+                type="range"
+                min="-12"
+                max="12"
+                step="1"
+                value={form.jet_lag_hours}
+                onChange={updateField("jet_lag_hours", Number)}
+              />
+            </div>
           </div>
         </section>
 
@@ -407,7 +416,6 @@ const styles = {
   subhead: { marginTop: "14px", color: "#767676", fontSize: "16px" },
   controls: {
     backgroundColor: "rgba(255,255,255,0.55)",
-    borderRadius: "22px",
     padding: "18px",
     border: "1px solid rgba(0, 0, 0, 0.05)",
   },
@@ -444,6 +452,7 @@ const styles = {
     height: "250px",
     position: "relative",
     marginTop: "20px",
+    overflow: "visible",
   },
   graphBars: {
     display: "flex",
@@ -459,13 +468,12 @@ const styles = {
   bar: {
     flex: 1,
     backgroundColor: "#D1D1D1",
-    borderRadius: "1px",
   },
   orangeIndicator: {
     position: "absolute",
     bottom: 22,
     width: "4px",
-    height: "190px",
+    height: "194px",
     backgroundColor: "#F26522",
     zIndex: 10,
     transform: "translateX(-50%)",
@@ -479,6 +487,16 @@ const styles = {
     height: "12px",
     backgroundColor: "#F26522",
     borderRadius: "50%",
+  },
+  orangeLabel: {
+    position: "absolute",
+    top: "-30px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    fontSize: "11px",
+    fontWeight: 700,
+    color: "#F26522",
+    whiteSpace: "nowrap",
   },
   axisRow: {
     display: "grid",
@@ -498,7 +516,6 @@ const styles = {
   },
   metricCard: {
     backgroundColor: "rgba(255,255,255,0.55)",
-    borderRadius: "18px",
     padding: "18px",
     border: "1px solid rgba(0, 0, 0, 0.05)",
     display: "flex",
@@ -510,5 +527,9 @@ const styles = {
     color: "#767676",
     textTransform: "uppercase",
     letterSpacing: "0.8px",
+  },
+  slider: {
+    width: "100%",
+    accentColor: "#F26522",
   },
 };
