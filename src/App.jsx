@@ -96,6 +96,19 @@ function formatHour(hour24h) {
   return `${twelveHour}${suffix}`;
 }
 
+function getInitialCurrentHour() {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+    timeZone: "America/New_York",
+  });
+  const parts = formatter.formatToParts(new Date());
+  const hour = Number(parts.find((part) => part.type === "hour")?.value ?? 13);
+  const minute = Number(parts.find((part) => part.type === "minute")?.value ?? 30);
+  return Math.round((hour + minute / 60) * 100) / 100;
+}
+
 function buildFallbackForecast(payload) {
   return Array.from({ length: payload.forecast_hours + 1 }, (_, hourOffset) => {
     const time24h = (payload.current_time_24h + hourOffset) % 24;
@@ -135,10 +148,10 @@ const initialPayload = {
   caffeine_mg: 100,
   hours_since_caffeine: 2,
   hours_since_meal: 3,
-  current_time_24h: 13.5,
+  current_time_24h: getInitialCurrentHour(),
   target_bedtime_24h: 23,
   jet_lag_hours: 0,
-  forecast_hours: 12,
+  forecast_hours: 23,
 };
 
 export default function App() {
@@ -189,7 +202,7 @@ export default function App() {
     if (!peakPoint || graphData.length <= 1) {
       return "65%";
     }
-    return `${(peakPoint.hour_offset / (graphData.length - 1)) * 100}%`;
+    return `${(peakPoint.time_24h / 23) * 100}%`;
   }, [graphData, peakPoint]);
   const lastDoseLabel = useMemo(() => {
     const lastDoseTime =
@@ -457,7 +470,7 @@ const styles = {
   graphBars: {
     display: "flex",
     alignItems: "flex-end",
-    gap: "2.5px",
+    gap: "1px",
     width: "100%",
     height: "160px",
     position: "absolute",
@@ -500,14 +513,16 @@ const styles = {
   },
   axisRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(7, 1fr)",
-    gap: "6px",
+    gridTemplateColumns: "repeat(24, minmax(0, 1fr))",
+    gap: "1px",
     marginTop: "4px",
   },
   axisLabel: {
-    fontSize: "12px",
+    fontSize: "8px",
     color: "#767676",
     textAlign: "center",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
   },
   metrics: {
     display: "grid",
