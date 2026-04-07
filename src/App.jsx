@@ -232,13 +232,14 @@ export default function App() {
           <div style={styles.headerTopline}>Daily Energy Manager</div>
           <div style={styles.heroRow}>
             <div>
+              <h1 style={styles.title}>Daily Energy Manager</h1>
               <div style={styles.rec}>
                 COFFEE REC: <strong>{apiResult.recommendation}</strong>
               </div>
-              <h1 style={styles.display}>
+              <div style={styles.display}>
                 {Math.round(apiResult.energy_score)}%{" "}
                 <span style={styles.unit}>ENERGY</span>
-              </h1>
+              </div>
               <div style={styles.subhead}>
                 Active caffeine {apiResult.active_caffeine_mg}mg · Bedtime in{" "}
                 {apiResult.hours_to_bed}h
@@ -397,13 +398,22 @@ export default function App() {
                   </g>
                 );
               })}
+              <line
+                x1="28"
+                x2="972"
+                y1="234"
+                y2="234"
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth="2"
+              />
             </svg>
           </div>
+          <div style={styles.axisTitle}>Time</div>
           <div style={styles.axisRow}>
             {graphData.map((point) => (
               <div key={point.hour_offset} style={styles.axisLabel}>
-                <strong>{Math.round(point.energy_score)}</strong>
-                <span>{point.label}</span>
+                <strong>{point.label}</strong>
+                <span>{Math.round(point.energy_score)} energy</span>
               </div>
             ))}
           </div>
@@ -470,6 +480,12 @@ const styles = {
     gap: "24px",
     alignItems: "center",
     flexWrap: "wrap",
+  },
+  title: {
+    margin: "0 0 10px",
+    fontSize: "clamp(34px, 6vw, 56px)",
+    lineHeight: 0.95,
+    letterSpacing: "-2px",
   },
   rec: { fontSize: "13px", letterSpacing: "1.2px", marginBottom: "8px" },
   display: { fontSize: "72px", margin: "0", letterSpacing: "-4px", lineHeight: 1 },
@@ -550,6 +566,13 @@ const styles = {
     gridTemplateColumns: "repeat(auto-fit, minmax(56px, 1fr))",
     gap: "8px",
     marginTop: "8px",
+  },
+  axisTitle: {
+    marginTop: "4px",
+    fontSize: "12px",
+    letterSpacing: "1px",
+    textTransform: "uppercase",
+    color: "#d7c4b1",
   },
   axisLabel: {
     display: "flex",
