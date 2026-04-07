@@ -240,7 +240,14 @@ export default function App() {
     return formatHour(lastDoseTime);
   }, [form.current_time_24h, form.hours_since_caffeine]);
   const axisLabels = useMemo(
-    () => graphData.filter((point) => Number.isInteger(point.time_24h) && point.time_24h % 3 === 0),
+    () =>
+      graphData.map((point) => ({
+        ...point,
+        displayLabel:
+          Number.isInteger(point.time_24h) && point.time_24h % 3 === 0
+            ? point.label
+            : "",
+      })),
     [graphData],
   );
 
@@ -298,7 +305,7 @@ export default function App() {
           <div style={styles.axisRow}>
             {axisLabels.map((point) => (
               <div key={point.hour_offset} style={styles.axisLabel}>
-                {point.label}
+                {point.displayLabel}
               </div>
             ))}
           </div>
@@ -547,7 +554,7 @@ const styles = {
   },
   axisRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(24, minmax(0, 1fr))",
     gap: "1px",
     marginTop: "4px",
   },
