@@ -244,12 +244,15 @@ export default function App() {
       graphData.map((point) => ({
         ...point,
         displayLabel:
-          Number.isInteger(point.time_24h) && point.time_24h % 3 === 0
+          Number.isInteger(point.time_24h) &&
+          point.time_24h % 3 === 0 &&
+          point.time_24h !== 0
             ? point.label
             : "",
       })),
     [graphData],
   );
+  const lowEnergyLineBottom = `${28 * 1.55}px`;
 
   const updateField = (field, parser = parseFloat) => (event) => {
     setForm((current) => ({
@@ -286,6 +289,9 @@ export default function App() {
             </div>
           </div>
           <div style={styles.graphArea}>
+            <div style={{ ...styles.lowEnergyLine, bottom: lowEnergyLineBottom }}>
+              <span style={styles.lowEnergyLabel}>28 · sleep-now zone</span>
+            </div>
             <div style={styles.graphBars}>
               {denseBars.map((point) => (
                 <div
@@ -508,6 +514,23 @@ const styles = {
     marginTop: "20px",
     overflow: "visible",
   },
+  lowEnergyLine: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    borderTop: "2px dotted rgba(242, 101, 34, 0.55)",
+    zIndex: 1,
+  },
+  lowEnergyLabel: {
+    position: "absolute",
+    right: 0,
+    top: "-18px",
+    fontSize: "11px",
+    fontWeight: 700,
+    color: "#F26522",
+    backgroundColor: "#F9F7F2",
+    paddingLeft: "8px",
+  },
   graphBars: {
     display: "flex",
     alignItems: "flex-end",
@@ -556,14 +579,15 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(24, minmax(0, 1fr))",
     gap: "1px",
-    marginTop: "4px",
+    marginTop: "10px",
   },
   axisLabel: {
-    fontSize: "8px",
+    fontSize: "10px",
     color: "#767676",
     textAlign: "center",
     whiteSpace: "nowrap",
     overflow: "hidden",
+    minHeight: "14px",
   },
   metrics: {
     display: "grid",
