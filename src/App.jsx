@@ -129,44 +129,6 @@ function buildFallbackResult(payload) {
   };
 }
 
-function getCurvePoint(point, index, total) {
-  const width = 1000;
-  const height = 260;
-  const leftPad = 28;
-  const rightPad = 28;
-  const topPad = 18;
-  const bottomPad = 26;
-  const usableWidth = width - leftPad - rightPad;
-  const usableHeight = height - topPad - bottomPad;
-  const x =
-    total <= 1 ? width / 2 : leftPad + (index / (total - 1)) * usableWidth;
-  const y = topPad + ((100 - point.energy_score) / 100) * usableHeight;
-  return { x, y };
-}
-
-function buildCurvePath(points) {
-  if (!points.length) {
-    return "";
-  }
-  return points
-    .map((point, index) => {
-      const { x, y } = getCurvePoint(point, index, points.length);
-      return `${index === 0 ? "M" : "L"} ${x} ${y}`;
-    })
-    .join(" ");
-}
-
-function buildAreaPath(points) {
-  if (!points.length) {
-    return "";
-  }
-  const height = 260;
-  const bottomPad = 26;
-  const first = getCurvePoint(points[0], 0, points.length);
-  const last = getCurvePoint(points.at(-1), points.length - 1, points.length);
-  return `${buildCurvePath(points)} L ${last.x} ${height - bottomPad} L ${first.x} ${height - bottomPad} Z`;
-}
-
 const initialPayload = {
   sleep_hrs: 7,
   alcohol_units: 0,
@@ -215,8 +177,25 @@ export default function App() {
   }, [form]);
 
   const graphData = useMemo(() => apiResult.forecast ?? [], [apiResult.forecast]);
-  const curvePath = useMemo(() => buildCurvePath(graphData), [graphData]);
-  const areaPath = useMemo(() => buildAreaPath(graphData), [graphData]);
+  const peakPoint = useMemo(() => {
+    if (!graphData.length) {
+      return null;
+    }
+    return graphData.reduce((best, point) =>
+      point.energy_score > best.energy_score ? point : best,
+    );
+  }, [graphData]);
+  const indicatorLeft = useMemo(() => {
+    if (!peakPoint || graphData.length <= 1) {
+      return "65%";
+    }
+    return `${(peakPoint.hour_offset / (graphData.length - 1)) * 100}%`;
+  }, [graphData, peakPoint]);
+  const lastDoseLabel = useMemo(() => {
+    const lastDoseTime =
+      (form.current_time_24h - form.hours_since_caffeine + 24) % 24;
+    return formatHour(lastDoseTime);
+  }, [form.current_time_24h, form.hours_since_caffeine]);
 
   const updateField = (field, parser = parseFloat) => (event) => {
     setForm((current) => ({
@@ -230,26 +209,16 @@ export default function App() {
       <div style={styles.container}>
         <header style={styles.header}>
           <div style={styles.headerTopline}>Daily Energy Manager</div>
-          <div style={styles.heroRow}>
-            <div>
-              <h1 style={styles.title}>Daily Energy Manager</h1>
-              <div style={styles.rec}>
-                COFFEE REC: <strong>{apiResult.recommendation}</strong>
-              </div>
-              <div style={styles.display}>
-                {Math.round(apiResult.energy_score)}%{" "}
-                <span style={styles.unit}>ENERGY</span>
-              </div>
-              <div style={styles.subhead}>
-                Active caffeine {apiResult.active_caffeine_mg}mg · Bedtime in{" "}
-                {apiResult.hours_to_bed}h
-              </div>
-            </div>
-            <div style={styles.scorePanel}>
-              <div style={styles.scoreCaption}>Live status</div>
-              <div style={styles.scoreDial}>{Math.round(apiResult.energy_score)}</div>
-              <div style={styles.scoreCaption}>forecast-driven</div>
-            </div>
+          <div style={styles.rec}>
+            COFFEE REC: <strong>{apiResult.recommendation}</strong>
+          </div>
+          <div style={styles.display}>
+            {Math.round(apiResult.energy_score)}%{" "}
+            <span style={styles.unit}>OPTIMAL</span>
+          </div>
+          <div style={styles.subhead}>
+            Active caffeine {apiResult.active_caffeine_mg}mg · Bedtime in{" "}
+            {apiResult.hours_to_bed}h
           </div>
         </header>
 
@@ -348,72 +317,34 @@ export default function App() {
         </section>
 
         <section style={styles.graphCard}>
-          <div style={styles.graphHeader}>
-            <span>Energy curve</span>
-            <span>Next {form.forecast_hours} hours</span>
+          <div style={styles.graphStats}>
+            <div>
+              Last Dose <span style={styles.timestamp}>{lastDoseLabel}</span>
+            </div>
+            <div>
+              Peak: <span style={styles.timestamp}>{peakPoint?.label ?? "--"}</span>
+            </div>
           </div>
           <div style={styles.graphArea}>
-            <svg viewBox="0 0 1000 260" preserveAspectRatio="none" style={styles.svg}>
-              <defs>
-                <linearGradient id="energyArea" x1="0" x2="0" y1="0" y2="1">
-                  <stop offset="0%" stopColor="#ff8a3d" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#ff8a3d" stopOpacity="0.02" />
-                </linearGradient>
-              </defs>
-              {[20, 40, 60, 80].map((level) => {
-                const y = 18 + ((100 - level) / 100) * (260 - 18 - 26);
-                return (
-                  <line
-                    key={level}
-                    x1="28"
-                    x2="972"
-                    y1={y}
-                    y2={y}
-                    stroke="rgba(255,255,255,0.08)"
-                    strokeDasharray="4 8"
-                  />
-                );
-              })}
-              <path d={areaPath} fill="url(#energyArea)" />
-              <path
-                d={curvePath}
-                fill="none"
-                stroke="#ff8a3d"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {graphData.map((point, index) => {
-                const { x, y } = getCurvePoint(point, index, graphData.length);
-                return (
-                  <g key={point.hour_offset}>
-                    <circle
-                      cx={x}
-                      cy={y}
-                      r={index === 0 ? 9 : 5}
-                      fill={index === 0 ? "#fff4dd" : "#ffc387"}
-                      stroke="#ff8a3d"
-                      strokeWidth={index === 0 ? 4 : 2}
-                    />
-                  </g>
-                );
-              })}
-              <line
-                x1="28"
-                x2="972"
-                y1="234"
-                y2="234"
-                stroke="rgba(255,255,255,0.25)"
-                strokeWidth="2"
-              />
-            </svg>
+            <div style={styles.graphBars}>
+              {graphData.map((point) => (
+                <div
+                  key={point.hour_offset}
+                  style={{
+                    ...styles.bar,
+                    height: `${Math.max(34, point.energy_score * 1.55)}px`,
+                  }}
+                />
+              ))}
+            </div>
+            <div style={{ ...styles.orangeIndicator, left: indicatorLeft }}>
+              <div style={styles.orangeDot} />
+            </div>
           </div>
-          <div style={styles.axisTitle}>Time</div>
           <div style={styles.axisRow}>
             {graphData.map((point) => (
               <div key={point.hour_offset} style={styles.axisLabel}>
-                <strong>{point.label}</strong>
-                <span>{Math.round(point.energy_score)} energy</span>
+                {point.label}
               </div>
             ))}
           </div>
@@ -444,143 +375,121 @@ export default function App() {
 
 const styles = {
   page: {
-    background:
-      "radial-gradient(circle at top, #fff4e6 0%, #f6f0e8 45%, #ece5db 100%)",
+    backgroundColor: "#F9F7F2",
     minHeight: "100vh",
     display: "flex",
     justifyContent: "center",
+    alignItems: "flex-start",
     padding: "32px 16px 48px",
     color: "#1f1a16",
-    fontFamily: "system-ui, sans-serif",
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   },
   container: {
-    width: "min(960px, 100%)",
+    width: "min(400px, 100%)",
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "22px",
   },
   header: {
-    background:
-      "linear-gradient(135deg, rgba(255, 247, 235, 0.98) 0%, rgba(255, 234, 204, 0.92) 100%)",
-    borderRadius: "30px",
-    padding: "28px",
-    border: "1px solid rgba(60, 40, 20, 0.08)",
-    boxShadow: "0 20px 50px rgba(75, 45, 20, 0.08)",
+    paddingTop: "8px",
   },
   headerTopline: {
     textTransform: "uppercase",
     letterSpacing: "1.4px",
     fontSize: "12px",
-    color: "#9a6d43",
-    marginBottom: "14px",
+    color: "#767676",
+    marginBottom: "18px",
   },
-  heroRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "24px",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  title: {
-    margin: "0 0 10px",
-    fontSize: "clamp(34px, 6vw, 56px)",
-    lineHeight: 0.95,
-    letterSpacing: "-2px",
-  },
-  rec: { fontSize: "13px", letterSpacing: "1.2px", marginBottom: "8px" },
-  display: { fontSize: "72px", margin: "0", letterSpacing: "-4px", lineHeight: 1 },
-  unit: { fontSize: "30px", color: "#7d6d5c", fontWeight: 400 },
-  subhead: { marginTop: "10px", color: "#6c5b4c", fontSize: "15px" },
-  scorePanel: {
-    minWidth: "160px",
-    padding: "18px 20px",
-    borderRadius: "24px",
-    background: "#201a17",
-    color: "#fff2e2",
-    textAlign: "center",
-  },
-  scoreDial: {
-    fontSize: "56px",
-    lineHeight: 1,
-    fontWeight: 700,
-    margin: "8px 0",
-  },
-  scoreCaption: {
-    fontSize: "12px",
-    textTransform: "uppercase",
-    letterSpacing: "1px",
-    color: "#d4bca8",
-  },
+  rec: { fontSize: "22px", fontWeight: 400, marginBottom: "15px", letterSpacing: "0.5px" },
+  display: { fontSize: "82px", margin: "0", letterSpacing: "-2px", lineHeight: 1, fontWeight: 400 },
+  unit: { fontSize: "64px", fontWeight: 400 },
+  subhead: { marginTop: "14px", color: "#767676", fontSize: "16px" },
   controls: {
-    background:
-      "linear-gradient(180deg, rgba(255, 251, 246, 0.95) 0%, rgba(246, 237, 226, 0.92) 100%)",
-    borderRadius: "30px",
-    padding: "24px",
-    border: "1px solid rgba(60, 40, 20, 0.08)",
+    backgroundColor: "rgba(255,255,255,0.55)",
+    borderRadius: "22px",
+    padding: "18px",
+    border: "1px solid rgba(0, 0, 0, 0.05)",
   },
   sectionTitle: {
     fontSize: "14px",
     textTransform: "uppercase",
     letterSpacing: "1.2px",
     marginBottom: "16px",
-    color: "#8c6340",
+    color: "#767676",
   },
   inputGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: "18px 20px",
+    gridTemplateColumns: "1fr",
+    gap: "14px",
   },
   inputRow: {
     display: "flex",
     flexDirection: "column",
-    fontSize: "13px",
+    fontSize: "12px",
     fontWeight: 700,
     gap: "8px",
   },
   graphCard: {
-    background:
-      "radial-gradient(circle at top left, #3b2d24 0%, #201a17 55%, #15100e 100%)",
-    color: "#f7efe6",
-    borderRadius: "28px",
-    padding: "22px 22px 18px",
-    boxShadow: "0 24px 60px rgba(29, 18, 10, 0.24)",
+    color: "#1a1a1a",
   },
-  graphHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontSize: "14px",
-    marginBottom: "18px",
-    color: "#d7c4b1",
+  graphStats: {
+    marginBottom: "20px",
+    fontSize: "19px",
+    color: "#767676",
   },
+  timestamp: { fontWeight: 700, color: "#444" },
   graphArea: {
-    minHeight: "280px",
+    width: "100%",
+    height: "250px",
+    position: "relative",
+    marginTop: "20px",
+  },
+  graphBars: {
     display: "flex",
     alignItems: "flex-end",
-  },
-  svg: {
+    gap: "2.5px",
     width: "100%",
-    height: "280px",
+    height: "160px",
+    position: "absolute",
+    bottom: 22,
+    left: 0,
+    right: 0,
+  },
+  bar: {
+    flex: 1,
+    backgroundColor: "#D1D1D1",
+    borderRadius: "1px",
+  },
+  orangeIndicator: {
+    position: "absolute",
+    bottom: 22,
+    width: "4px",
+    height: "190px",
+    backgroundColor: "#F26522",
+    zIndex: 10,
+    transform: "translateX(-50%)",
+  },
+  orangeDot: {
+    position: "absolute",
+    top: "-5px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    width: "12px",
+    height: "12px",
+    backgroundColor: "#F26522",
+    borderRadius: "50%",
   },
   axisRow: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(56px, 1fr))",
-    gap: "8px",
-    marginTop: "8px",
-  },
-  axisTitle: {
+    gridTemplateColumns: "repeat(7, 1fr)",
+    gap: "6px",
     marginTop: "4px",
-    fontSize: "12px",
-    letterSpacing: "1px",
-    textTransform: "uppercase",
-    color: "#d7c4b1",
   },
   axisLabel: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "3px",
-    fontSize: "11px",
-    color: "#b59f8a",
+    fontSize: "12px",
+    color: "#767676",
+    textAlign: "center",
   },
   metrics: {
     display: "grid",
@@ -588,17 +497,17 @@ const styles = {
     gap: "14px",
   },
   metricCard: {
-    backgroundColor: "rgba(255, 251, 246, 0.88)",
+    backgroundColor: "rgba(255,255,255,0.55)",
     borderRadius: "18px",
     padding: "18px",
-    border: "1px solid rgba(60, 40, 20, 0.08)",
+    border: "1px solid rgba(0, 0, 0, 0.05)",
     display: "flex",
     flexDirection: "column",
     gap: "6px",
   },
   metricLabel: {
     fontSize: "12px",
-    color: "#7d6d5c",
+    color: "#767676",
     textTransform: "uppercase",
     letterSpacing: "0.8px",
   },
